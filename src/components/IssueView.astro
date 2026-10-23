@@ -1,0 +1,95 @@
+---
+import { featureLabel, formatShamsiId, formatVolume, SECTIONS, STATUS_LABELS, weekdayName } from "../lib/format.mjs";
+import { asset, href } from "../lib/href.mjs";
+
+const { issue, showPermalink = false } = Astro.props;
+const dateLine = `${formatShamsiId(issue.id)} · ${weekdayName(issue.isoDate)}`;
+---
+
+<article class="issue">
+  {
+    (issue.status !== "approved" || issue.errors.length > 0) && (
+      <div class="banner">
+        <p>
+          این پیش‌نمایش است. وضعیت: {STATUS_LABELS[issue.status] ?? issue.status}.
+        </p>
+        {issue.errors.length > 0 && (
+          <ul>
+            {issue.errors.map((error) => (
+              <li>{error}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  }
+
+  <figure class="cover">
+    {
+      issue.images.cover.exists ? (
+        <img src={asset(issue.images.cover.src)} alt={issue.coverAlt} />
+      ) : (
+        <div class="missing-art">تصویر هفته هنوز گذاشته نشده است.</div>
+      )
+    }
+    <figcaption>تصویر هفته</figcaption>
+  </figure>
+
+  <header class="issue-head">
+    <p class="issue-volume">{formatVolume(issue.volume)}</p>
+    <p class="issue-date">{dateLine}</p>
+    <h1>{issue.theme}</h1>
+    <p class="deck">{issue.season} · {issue.occasion}</p>
+    {
+      showPermalink && (
+        <p class="permalink">
+          <a href={href(`issues/${issue.id}`)}>پیوند این شماره</a>
+        </p>
+      )
+    }
+  </header>
+
+  <nav class="contents" aria-label="فهرست شماره">
+    {
+      SECTIONS.map((section) => (
+        <a href={`#${section.id}`}>
+          {section.id === "feature" ? issue.featureTitle : section.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    SECTIONS.map((section) => {
+      const kicker =
+        section.id === "feature"
+          ? `${section.kicker} · ${featureLabel(issue.featureKind)}`
+          : section.kicker;
+      const heading = section.id === "feature" ? issue.featureTitle : section.label;
+      return (
+        <section id={section.id} class={`section section-${section.id}`}>
+          <p class="label">{kicker}</p>
+          <h2>{heading}</h2>
+          <figure class={section.id === "feature" ? "feature-figure" : "section-figure"}>
+            {section.id === "feature" ? (
+              issue.images.feature.exists ? (
+                <img src={asset(issue.images.feature.src)} alt={issue.featureAlt} />
+              ) : (
+                <div class="missing-art">تصویر موضوع هنوز گذاشته نشده است.</div>
+              )
+            ) : issue.images.sections[section.id]?.exists ? (
+              <img
+                src={asset(issue.images.sections[section.id].src)}
+                alt={issue.sectionAlts[section.id]}
+              />
+            ) : (
+              <div class="missing-art">تصویر این بخش هنوز گذاشته نشده است.</div>
+            )}
+            {section.id === "feature" && <figcaption>تصویر موضوع</figcaption>}
+          </figure>
+          <div class="prose" set:html={issue.sections[section.id].html} />
+        </section>
+      );
+    })
+  }
+</article>

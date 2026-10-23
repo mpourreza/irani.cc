@@ -1,0 +1,71 @@
+---
+import "../styles/global.css";
+import "@fontsource-variable/vazirmatn";
+import { release, site } from "../config.mjs";
+import { asset, href } from "../lib/href.mjs";
+
+const {
+  title,
+  description = site.description,
+  ogImage,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${site.masthead}` : `${site.kicker} · ${site.masthead}`;
+const canonical = new URL(Astro.url.pathname, site.url).href;
+const image = ogImage
+  ? new URL(String(ogImage).replace(/^\//, ""), `${site.url}/`).href
+  : undefined;
+
+const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const links = [
+  { href: href(""), label: "این شماره", current: path === href("") },
+  { href: href("archive"), label: "بایگانی", current: path === href("archive") },
+  { href: href("about"), label: "درباره", current: path === href("about") },
+];
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogImage ? "article" : "website"} />
+    <meta property="og:locale" content="fa_IR" />
+    <meta property="og:url" content={canonical} />
+    {image && <meta property="og:image" content={image} />}
+    <meta name="theme-color" content="#fbf7ef" />
+    <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#main">رفتن به متن</a>
+    <div class="sheet">
+      <header class="masthead-block">
+        <p class="kicker-site">{site.kicker}</p>
+        <a class="masthead" href={href("")}>{site.masthead}</a>
+        <div class="rule" aria-hidden="true"><span></span></div>
+        <nav class="nav" aria-label="بخش‌های سایت">
+          {
+            links.map((link) => (
+              <a href={link.href} aria-current={link.current ? "page" : undefined}>
+                {link.label}
+              </a>
+            ))
+          }
+        </nav>
+      </header>
+      <main id="main">
+        <slot />
+      </main>
+      <footer class="site-footer">
+        <p>{site.masthead}</p>
+        <p>{release.label}.</p>
+        <p>هر شماره بعد از یک تأیید منتشر می‌شود.</p>
+      </footer>
+    </div>
+  </body>
+</html>

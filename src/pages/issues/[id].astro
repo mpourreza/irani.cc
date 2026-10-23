@@ -1,0 +1,23 @@
+---
+import Base from "../../layouts/Base.astro";
+import IssueView from "../../components/IssueView.astro";
+import { formatVolume } from "../../lib/format.mjs";
+import { loadIssues } from "../../lib/issues.mjs";
+
+export function getStaticPaths() {
+  return loadIssues({ includeUnapproved: import.meta.env.DEV }).map((issue) => ({
+    params: { id: issue.id },
+    props: { issue },
+  }));
+}
+
+const { issue } = Astro.props;
+---
+
+<Base
+  title={`${formatVolume(issue.volume)} · ${issue.theme}`}
+  description={`${formatVolume(issue.volume)}. ${issue.theme}. ${issue.season}، ${issue.occasion}.`}
+  ogImage={issue.images.cover.exists ? issue.images.cover.src : undefined}
+>
+  <IssueView issue={issue} />
+</Base>

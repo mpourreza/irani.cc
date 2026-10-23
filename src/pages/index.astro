@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+import IssueView from "../components/IssueView.astro";
+import { formatVolume } from "../lib/format.mjs";
+import { loadIssues } from "../lib/issues.mjs";
+import { site } from "../config.mjs";
+
+const issues = loadIssues({ includeUnapproved: import.meta.env.DEV });
+const issue = issues[0];
+const description = issue ? `${formatVolume(issue.volume)}. ${issue.theme}. ${issue.season}، ${issue.occasion}.` : site.description;
+---
+
+<Base
+  title={issue ? `${formatVolume(issue.volume)} · ${issue.theme}` : site.kicker}
+  description={description}
+  ogImage={issue?.images.cover.exists ? issue.images.cover.src : undefined}
+>
+  {
+    issue ? (
+      <IssueView issue={issue} showPermalink />
+    ) : (
+      <p class="empty">هنوز شماره‌ای برای خواندن نیست.</p>
+    )
+  }
+</Base>

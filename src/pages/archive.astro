@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+import { loadIssues } from "../lib/issues.mjs";
+import { featureLabel, formatShamsiId, formatVolume } from "../lib/format.mjs";
+import { href } from "../lib/href.mjs";
+
+const issues = loadIssues({ includeUnapproved: import.meta.env.DEV });
+---
+
+<Base title="بایگانی" description="شماره‌های گذشتهٔ هفته‌نامه.">
+  <h1 class="page-title">بایگانی</h1>
+  {
+    issues.length === 0 ? (
+      <p class="empty">هنوز شماره‌ای برای خواندن نیست.</p>
+    ) : (
+      issues.map((issue) => (
+        <a class="card" href={href(`issues/${issue.id}`)}>
+          <p class="card-date">{formatVolume(issue.volume)} · {formatShamsiId(issue.id)}</p>
+          <h2>{issue.theme}</h2>
+          <p class="card-kind">{featureLabel(issue.featureKind)} · {issue.occasion}</p>
+        </a>
+      ))
+    )
+  }
+</Base>
