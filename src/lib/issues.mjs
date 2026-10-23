@@ -11,6 +11,7 @@ import {
   countWords,
   firstParagraph,
   foldFa,
+  isReleased,
   isReleaseSaturday,
   normalizeNewlines,
   RELEASE_DATE_ERROR,
@@ -394,33 +395,40 @@ export function withVolumes(issues) {
   return issues.map((issue) => ({ ...issue, volume: volumeById.get(issue.id) }));
 }
 
-export function loadIssues({ includeUnapproved }) {
-  const issues = withVolumes(listIssueIds().map((id) => loadIssue(id)));
-  return selectForSite(issues, includeUnapproved);
-}
-
-export function selectForSite(issues, includeUnapproved) {
-  const sorted = [...issues].sort(
+function byNewest(issues) {
+  return [...issues].sort(
     (a, b) => b.isoDate.localeCompare(a.isoDate) || b.id.localeCompare(a.id),
   );
-  if (includeUnapproved) return sorted;
-  const published = sorted.filter((issue) => issue.status === "approved");
-  const blocked = published.filter((issue) => issue.errors.length > 0);
+}
+
+function listedIssues(issues, includeUnapproved, now, includeUnreleased = false) {
+  return byNewest(issues).filter((issue) => {
+    if (!includeUnreleased && !isReleased(issue.isoDate, now)) return false;
+    if (!includeUnapproved && issue.status !== "approved") return false;
+    return true;
+  });
+}
+
+export function loadIssues({ includeUnapproved, includeUnreleased = false, now = new Date() } = {}) {
+  const issues = withVolumes(listIssueIds().map((id) => loadIssue(id)));
+  return selectForSite(issues, includeUnapproved, now, includeUnreleased);
+}
+
+export function selectForSite(issues, includeUnapproved, now = new Date(), includeUnreleased = false) {
+  const visible = listedIssues(issues, includeUnapproved, now, includeUnreleased);
+  if (includeUnapproved) return visible;
+  const blocked = visible.filter((issue) => issue.errors.length > 0);
   if (blocked.length > 0) {
     const details = blocked
       .map((issue) => `${issue.id}\n${issue.errors.map((error) => `- ${error}`).join("\n")}`)
       .join("\n\n");
     throw new Error(`شمارهٔ تأییدشده کامل نیست و ساخت متوقف شد.\n\n${details}`);
   }
-  return published;
+  return visible;
 }
 
-export function visibleIds(issues, includeUnapproved) {
-  const sorted = [...issues].sort(
-    (a, b) => b.isoDate.localeCompare(a.isoDate) || b.id.localeCompare(a.id),
-  );
-  const visible = includeUnapproved ? sorted : sorted.filter((issue) => issue.status === "approved");
-  return visible.map((issue) => issue.id);
+export function visibleIds(issues, includeUnapproved, now = new Date()) {
+  return listedIssues(issues, includeUnapproved, now).map((issue) => issue.id);
 }
 
 export function assertInvariants() {
@@ -429,16 +437,43 @@ export function assertInvariants() {
   if (hamza !== DISCLAIMER_FOLDED || yeh !== DISCLAIMER_FOLDED) {
     throw new Error("شکل‌های جملهٔ سلامت به یک صورت جمع نمی‌شوند.");
   }
+  const now = new Date("2026-10-23T18:00:00Z");
   const ids = visibleIds(
     [
       { id: "a", status: "draft", isoDate: "2026-01-02" },
       { id: "b", status: "approved", isoDate: "2026-01-01" },
       { id: "c", status: "in_review", isoDate: "2026-01-03" },
+      { id: "d", status: "approved", isoDate: "2026-10-31" },
     ],
     false,
+    now,
   );
   if (ids.join(",") !== "b") {
     throw new Error("صافی شماره‌های منتشرشده درست کار نمی‌کند.");
+  }
+  const preview = visibleIds(
+    [
+      { id: "a", status: "draft", isoDate: "2026-10-17" },
+      { id: "b", status: "approved", isoDate: "2026-10-10" },
+      { id: "c", status: "approved", isoDate: "2026-10-24" },
+    ],
+    true,
+    now,
+  );
+  if (preview.join(",") !== "a,b") {
+    throw new Error("صافی شماره‌های آینده درست کار نمی‌کند.");
+  }
+  const beforeOpen = new Date("2026-10-17T14:59:00Z");
+  const atOpen = new Date("2026-10-17T15:00:00Z");
+  const beforeWinter = new Date("2026-11-07T15:59:00Z");
+  const atWinter = new Date("2026-11-07T16:00:00Z");
+  if (
+    isReleased("2026-10-17", beforeOpen) ||
+    !isReleased("2026-10-17", atOpen) ||
+    isReleased("2026-11-07", beforeWinter) ||
+    !isReleased("2026-11-07", atWinter)
+  ) {
+    throw new Error("ساعت ۸ صبح به وقت پاسیفیک درست کار نمی‌کند.");
   }
   if (!isReleaseSaturday("2026-10-10") || isReleaseSaturday("2026-10-08")) {
     throw new Error("تشخیص شنبهٔ انتشار درست کار نمی‌کند.");

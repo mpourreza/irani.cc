@@ -1,3 +1,5 @@
+import { release } from "../config.mjs";
+
 export const FEATURE_KINDS = [
   { id: "literature", label: "ادبیات" },
   { id: "place", label: "شهر و جا" },
@@ -88,6 +90,51 @@ export function isReleaseSaturday(isoDate) {
   const [year, month, day] = String(isoDate).split("-").map(Number);
   if (!year || !month || !day) return false;
   return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 6;
+}
+
+function timeZoneOffsetMs(utcMs, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(utcMs));
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== "literal") map[part.type] = part.value;
+  }
+  let hour = Number(map.hour);
+  let day = Number(map.day);
+  if (hour === 24) {
+    hour = 0;
+    day += 1;
+  }
+  const wallAsUtc = Date.UTC(Number(map.year), Number(map.month) - 1, day, hour, Number(map.minute), Number(map.second));
+  return wallAsUtc - utcMs;
+}
+
+export function releaseInstant(isoDate, when = release) {
+  const [year, month, day] = String(isoDate).split("-").map(Number);
+  if (!year || !month || !day) return null;
+  const wall = Date.UTC(year, month - 1, day, when.hour, 0, 0);
+  let utc = wall;
+  for (let hop = 0; hop < 4; hop += 1) {
+    const next = wall - timeZoneOffsetMs(utc, when.timeZone);
+    if (next === utc) return new Date(utc);
+    utc = next;
+  }
+  return new Date(utc);
+}
+
+export function isReleased(isoDate, now = new Date(), when = release) {
+  const instant = releaseInstant(isoDate, when);
+  if (!instant) return false;
+  const moment = now instanceof Date ? now : new Date(now);
+  return moment.getTime() >= instant.getTime();
 }
 
 export function countWords(markdown) {

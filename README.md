@@ -7,7 +7,7 @@ npm install
 npm run dev
 ```
 
-Open the home page for the latest issue. Drafts show in the dev server. `npm run build` keeps only issues whose status is `approved`. Each issue is dated on a Saturday and releases at 8:00 in the morning, Pacific time.
+Open the home page for the current issue. The archive lists that issue and earlier ones. A later Saturday stays off those pages until 8:00 in the morning, Pacific time. Drafts show in the dev server once that time has passed; until then, open the issue at its own address. `npm run build` keeps only approved issues that have reached that morning.
 
 ## Make a week
 

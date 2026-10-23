@@ -51,6 +51,6 @@ The rotating feature cycles in this order: literature, place, music, craft, gard
 6. Desk sets `"status": "in_review"` after the check is clean.
 7. A person reads `npm run dev` and then runs `npm run issue:approve -- 1405-08-02`.
 
-Dev preview shows drafts. `npm run build` includes only approved issues, and it stops if an approved issue fails the check. Restart the dev server after creating a new issue so its page exists.
+The home page and the archive show an issue only after its Saturday, 8:00 in the morning, Pacific time. Later issues stay off that view. Dev preview shows drafts that have reached that morning, and a later issue can still be opened at `issues/<id>`. `npm run build` includes only approved issues that have reached that morning, and it stops if an approved issue fails the check. Restart the dev server after creating a new issue so its page exists.
 
 Role details live in `docs/agents/`.

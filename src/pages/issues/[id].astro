@@ -5,7 +5,10 @@ import { formatVolume } from "../../lib/format.mjs";
 import { loadIssues } from "../../lib/issues.mjs";
 
 export function getStaticPaths() {
-  return loadIssues({ includeUnapproved: import.meta.env.DEV }).map((issue) => ({
+  return loadIssues({
+    includeUnapproved: import.meta.env.DEV,
+    includeUnreleased: import.meta.env.DEV,
+  }).map((issue) => ({
     params: { id: issue.id },
     props: { issue },
   }));
