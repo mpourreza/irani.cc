@@ -23,6 +23,6 @@ Restart `npm run dev` after creating an issue so the new page is registered.
 
 ## GitHub Pages, later
 
-`.github/workflows/pages.yml` builds the site and deploys to Pages when this repository is pushed to `main` and Pages is enabled. This project does not turn that on by itself.
+`.github/workflows/pages.yml` builds the site and deploys to Pages when this repository is pushed to `master` and Pages is set to GitHub Actions. This project does not turn that on by itself.
 
 `astro.config.mjs` sets `site` to `https://irani.cc` and `base` to `/`. When you attach the domain, add a `public/CNAME` file containing `irani.cc`. If the first public URL is a project site (`username.github.io/repo/`), set `base` to `/repo/` before that deploy.
